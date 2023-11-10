@@ -37,9 +37,9 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 2
-   h0, h1 = np.array(dfilters('dmaxflat4', 'd'), dtype=object) / np.sqrt(2)
-   h0 = h0 / np.sqrt(2)
-   h1 = h1 / np.sqrt(2)
+    h0, h1 = np.array(dfilters('dmaxflat4', 'd'), dtype=object) / np.sqrt(2)
+    h0 = h0 / np.sqrt(2)
+    h1 = h1 / np.sqrt(2)
 
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = np.array([0.0104933261758410,-0.0263483047033631,

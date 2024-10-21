@@ -14,7 +14,7 @@ root_path = os.path.dirname(__file__)
 requires = open(os.path.join(root_path, 'requirements.txt')).readlines()
 
 setup(
-    name='pyshearlab',
+    name='jaxshearlab',
 
     version='0.0.1',
 
@@ -27,7 +27,7 @@ setup(
     license='GPL',
 
     packages=find_packages(exclude=['*test*']),
-    package_dir={'pyshearlab': 'pyshearlab'},
+    package_dir={'jaxshearlab': 'jaxshearlab'},
     
     install_requires=[requires]
 )

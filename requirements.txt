@@ -1,4 +1,3 @@
-numpy
-scipy
+jax
 pillow
 matplotlib

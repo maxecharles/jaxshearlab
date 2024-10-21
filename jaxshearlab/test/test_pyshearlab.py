@@ -1,5 +1,5 @@
 import numpy as np
-import pyshearlab
+import jaxshearlab
 import pytest
 
 
@@ -17,7 +17,7 @@ def shape(request):
 @pytest.fixture(scope='module')
 def shearletSystem(shape):
     scales = 2
-    return pyshearlab.SLgetShearletSystem2D(0,
+    return jaxshearlab.SLgetShearletSystem2D(0,
                                             shape[0], shape[1],
                                             scales)
 
@@ -30,7 +30,7 @@ def test_call(dtype, shearletSystem):
     X = np.random.randn(*shape).astype(dtype)
 
     # decomposition
-    coeffs = pyshearlab.SLsheardec2D(X, shearletSystem)
+    coeffs = jaxshearlab.SLsheardec2D(X, shearletSystem)
 
     # Test parameters
     assert coeffs.dtype == X.dtype
@@ -45,10 +45,10 @@ def test_adjoint(dtype, shearletSystem):
     X = np.random.randn(*shape).astype(dtype)
 
     # decomposition
-    coeffs = pyshearlab.SLsheardec2D(X, shearletSystem)
+    coeffs = jaxshearlab.SLsheardec2D(X, shearletSystem)
 
     # adjoint
-    Xadj = pyshearlab.SLshearadjoint2D(coeffs, shearletSystem)
+    Xadj = jaxshearlab.SLshearadjoint2D(coeffs, shearletSystem)
     assert Xadj.dtype == X.dtype
     assert Xadj.shape == X.shape
 
@@ -62,10 +62,10 @@ def test_inverse(dtype, shearletSystem):
     X = np.random.randn(*shearletSystem['size']).astype(dtype)
 
     # decomposition
-    coeffs = pyshearlab.SLsheardec2D(X, shearletSystem)
+    coeffs = jaxshearlab.SLsheardec2D(X, shearletSystem)
 
     # reconstruction
-    Xrec = pyshearlab.SLshearrec2D(coeffs, shearletSystem)
+    Xrec = jaxshearlab.SLshearrec2D(coeffs, shearletSystem)
     assert Xrec.dtype == X.dtype
     assert Xrec.shape == X.shape
 
@@ -77,11 +77,11 @@ def test_adjoint_of_inverse(dtype, shearletSystem):
     X = np.random.randn(*shearletSystem['size']).astype(dtype)
 
     # decomposition
-    coeffs = pyshearlab.SLsheardec2D(X, shearletSystem)
+    coeffs = jaxshearlab.SLsheardec2D(X, shearletSystem)
 
     # reconstruction
-    Xrec = pyshearlab.SLshearrec2D(coeffs, shearletSystem)
-    Xrecadj = pyshearlab.SLshearrecadjoint2D(Xrec, shearletSystem)
+    Xrec = jaxshearlab.SLshearrec2D(coeffs, shearletSystem)
+    Xrecadj = jaxshearlab.SLshearrecadjoint2D(Xrec, shearletSystem)
     assert Xrecadj.dtype == X.dtype
     assert Xrecadj.shape == coeffs.shape
 
@@ -95,11 +95,11 @@ def test_inverse_of_adjoint(dtype, shearletSystem):
     X = np.random.randn(*shearletSystem['size']).astype(dtype)
 
     # decomposition to create data.
-    coeffs = pyshearlab.SLsheardec2D(X, shearletSystem)
+    coeffs = jaxshearlab.SLsheardec2D(X, shearletSystem)
 
     # Validate that the inverse works.
-    Xadj = pyshearlab.SLshearadjoint2D(coeffs, shearletSystem)
-    Xadjrec = pyshearlab.SLshearrecadjoint2D(Xadj, shearletSystem)
+    Xadj = jaxshearlab.SLshearadjoint2D(coeffs, shearletSystem)
+    Xadjrec = jaxshearlab.SLshearrecadjoint2D(Xadj, shearletSystem)
     assert Xadjrec.dtype == X.dtype
     assert Xadjrec.shape == coeffs.shape
 

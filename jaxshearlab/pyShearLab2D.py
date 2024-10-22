@@ -10,9 +10,9 @@ Stefan Loock, February 2, 2017 [sloock@gwdg.de]
 """
 
 from __future__ import division
-import numpy as np
-from pyshearlab.pySLFilters import *
-from pyshearlab.pySLUtilities import *
+from jax import numpy as np
+from jaxshearlab.pySLFilters import *
+from jaxshearlab.pySLUtilities import *
 
 def SLgetShearletSystem2D(useGPU, rows, cols, nScales, shearLevels=None, full=0, directionalFilter=None, quadratureMirrorFilter=None):
     """
@@ -154,9 +154,8 @@ def SLgetShearletSystem2D(useGPU, rows, cols, nScales, shearLevels=None, full=0,
     if shearLevels is None:
         shearLevels = np.ceil(np.arange(1,nScales+1)/2).astype(int)
     if directionalFilter is None:
-        h0, h1 = np.array(dfilters('dmaxflat4', 'd'), dtype=object) / np.sqrt(2)
+        h0, _ = dfilters('dmaxflat4', 'd')
         h0 = h0 / np.sqrt(2)
-        h1 = h1 / np.sqrt(2)
         directionalFilter = modulate2(h0, 'c')
     if quadratureMirrorFilter is None:
         quadratureMirrorFilter = np.array([0.0104933261758410, -0.0263483047033631,
@@ -223,7 +222,8 @@ def SLsheardec2D(X, shearletSystem):
     # note that pointwise multiplication in the fourier domain equals
     # convolution in the time-domain
     for j in range(shearletSystem["nShearlets"]):
-        coeffs[:,:,j] = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j]))))
+        # coeffs[:,:,j] = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j]))))
+        coeffs = coeffs.at[..., j].set(fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j])))))
 
     # probably due to rounding errors, the result may have imaginary parts with
     # small magnitude. if they are small enough, we can ignore them. otherwise
@@ -361,7 +361,8 @@ def SLshearrecadjoint2D(X, shearletSystem):
     coeffs = np.zeros(shearletSystem["shearlets"].shape, dtype=complex)
 
     for j in range(shearletSystem["nShearlets"]):
-        coeffs[:,:,j] = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j]))))
+        # coeffs[:,:,j] = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j]))))
+        coeffs = coeffs.at[..., j].set(fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j])))))
 
     return np.real(coeffs).astype(X.dtype)
 

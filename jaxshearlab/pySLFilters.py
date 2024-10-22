@@ -9,8 +9,8 @@ Stefan Loock, February 2, 2017 [sloock@gwdg.de]
 """
 
 from __future__ import division
-import numpy as np
-from scipy import signal as signal
+from jax import numpy as np
+from jax.scipy import signal
 
 
 try:
@@ -599,25 +599,25 @@ def dmaxflat(N,d):
         return 0
     if N == 1:
         h = np.array([[0, 1, 0],[1, 0, 1],[0, 1, 0]])/4
-        h[1,1] = d
+        h = h.at[N, N].set(d)
     elif N == 2:
         h = np.array([[0, -1, 0],[-1, 0, 10], [0, 10, 0]])
         h = np.append(h, np.fliplr(h[:,0:-1]), 1)
         h = np.append(h, np.flipud(h[0:-1,:]), 0)/32
-        h[2,2] = d
+        h = h.at[N, N].set(d)
     elif N == 3:
         h = np.array([[0, 3, 0, 2],[3, 0, -27, 0],[0, -27, 0, 174],
                         [2, 0, 174, 0]])
         h = np.append(h, np.fliplr(h[:, 0:-1]), 1)
         h = np.append(h, np.flipud(h[0:-1,:]),0)
-        h[3,3] = d
+        h = h.at[N, N].set(d)
     elif N == 4:
         h = np.array([[0, -5, 0, -3, 0], [-5, 0, 52, 0, 34],
                         [0, 52, 0, -276, 0], [-3, 0, -276, 0, 1454],
                         [0, 34, 0, 1454, 0]])/np.power(2,12)
         h = np.append(h, np.fliplr(h[:,0:-1]),1)
         h = np.append(h, np.flipud(h[0:-1,:]),0)
-        h[4,4] = d
+        h = h.at[N, N].set(d)
     elif N == 5:
         h = np.array([[0, 35, 0, 20, 0, 18], [35, 0, -425, 0, -250, 0],
                     [0, -425, 0, 2500, 0, 1610], [20, 0, 2500, 0, -10200, 0],
@@ -625,7 +625,7 @@ def dmaxflat(N,d):
                     [18, 0, 1610, 0, 47780, 0]])/np.power(2,17)
         h = np.append(h, np.fliplr(h[:,0:-1]),1)
         h = np.append(h, np.flipud(h[0:-1,:]),0)
-        h[5,5] = d
+        h = h.at[N, N].set(d)
     elif N == 6:
         h = np.array([[0, -63, 0, -35, 0, -30, 0],
                      [-63, 0, 882, 0, 495, 0, 444],
@@ -636,7 +636,7 @@ def dmaxflat(N,d):
                      [0, 44, 0, 16460, 0, 389112, 0]])/np.power(2,20)
         h = np.append(h, np.fliplr(h[:,0:-1]),1)
         h = np.append(h, np.flipud(h[0:-1,:]),0)
-        h[6,6] = d
+        h = h.at[N, N].set(d)
     elif N == 7:
         h = np.array([[0, 231, 0, 126, 0, 105, 0, 100],
                     [231, 0, -3675, 0, -2009, 0, -1715, 0],
@@ -648,7 +648,7 @@ def dmaxflat(N,d):
                     [100, 0, 13804, 0, 311780, 0, 6305740, 0]])/np.power(2,24)
         h = np.append(h, np.fliplr(h[:,0:-1]),1)
         h = np.append(h, np.flipud(h[0:-1,:]),0)
-        h[7,7] = d
+        h = h.at[N, N].set(d)
     return h
 
 
@@ -678,8 +678,10 @@ def mctrans(b,t):
     b = fftlib.fftshift(b[::-1]) #inverse fftshift
     b = b[::-1]
     a = np.zeros(n+1)
-    a[0] = b[0]
-    a[1:n+1] = 2*b[1:n+1]
+    # a[0] = b[0]
+    a = a.at[0].set(b[0])
+    # a[1:n+1] = 2*b[1:n+1]
+    a = a.at[1:n+1].set(2*b[1:n+1])
 
     inset = np.floor((np.asarray(t.shape)-1)/2)
     inset = inset.astype(int)
@@ -689,24 +691,33 @@ def mctrans(b,t):
     h = a[1]*P1;
     rows = int(inset[0]+1)
     cols = int(inset[1]+1)
-    h[rows-1,cols-1] = h[rows-1,cols-1]+a[0]*P0;
+    # h[rows-1,cols-1] = h[rows-1,cols-1]+a[0]*P0;
+    h = h.at[rows-1,cols-1].set(h[rows-1,cols-1]+a[0]*P0)
+
     for i in range(3,n+2):
         P2 = 2*signal.convolve2d(t, P1)
         rows = (rows + inset[0]).astype(int)
         cols = (cols + inset[1]).astype(int)
         if i == 3:
-            P2[rows-1,cols-1] = P2[rows-1,cols-1] - P0
+            # P2[rows-1,cols-1] = P2[rows-1,cols-1] - P0
+            P2 = P2.at[rows-1,cols-1].set(P2[rows-1,cols-1]-P0)
         else:
-            P2[rows[0]-1:rows[-1],cols[0]-1:cols[-1]] = P2[rows[0]-1:rows[-1],
-                                                        cols[0]-1:cols[-1]] - P0
+            # P2[rows[0]-1:rows[-1],cols[0]-1:cols[-1]] = P2[rows[0]-1:rows[-1],
+            #                                             cols[0]-1:cols[-1]] - P0
+            P2 = P2.at[rows[0]-1:rows[-1],cols[0]-1:cols[-1]].set(
+                P2[rows[0]-1:rows[-1],cols[0]-1:cols[-1]] - P0)
+            
         rows = inset[0] + np.arange(np.asarray(P1.shape)[0])+1
         rows = rows.astype(int)
         cols = inset[1] + np.arange(np.asarray(P1.shape)[1])+1
         cols = cols.astype(int)
         hh = h;
         h = a[i-1]*P2
-        h[rows[0]-1:rows[-1], cols[0]-1:cols[-1]] = h[rows[0]-1:rows[-1],
-                                                        cols[0]-1:cols[-1]] + hh
+        # h[rows[0]-1:rows[-1], cols[0]-1:cols[-1]] = h[rows[0]-1:rows[-1],
+        #                                                 cols[0]-1:cols[-1]] + hh
+        h = h.at[rows[0]-1:rows[-1], cols[0]-1:cols[-1]].set(
+            h[rows[0]-1:rows[-1], cols[0]-1:cols[-1]] + hh)
+        
         P0 = P1;
         P1 = P2;
     h = np.rot90(h,2)

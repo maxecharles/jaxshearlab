@@ -10,10 +10,9 @@ Stefan Loock, February 2, 2017 [sloock@gwdg.de]
 
 from __future__ import division
 import sys
-import numpy as np
-import scipy as scipy
-import scipy.io as sio
-from pyshearlab.pySLFilters import *
+import jax.numpy as np
+from jax import scipy
+from jaxshearlab.pySLFilters import *
 
 
 def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
@@ -37,9 +36,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 2
-    h0, h1 = np.array(dfilters('dmaxflat4', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('dmaxflat4', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
 
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = np.array([0.0104933261758410,-0.0263483047033631,
@@ -53,9 +51,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 3
-    h0, h1 = np.array(dfilters('cd', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('cd', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
 
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = np.array([0.0104933261758410, -0.0263483047033631,
@@ -69,9 +66,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 4 - somehow the same as 3, i don't know why?!
-    h0, h1 = np.array(dfilters('cd', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('cd', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = np.array([0.0104933261758410, -0.0263483047033631,
                     -0.0517766952966370, 0.276348304703363, 0.582566738241592,
@@ -84,9 +80,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 5
-    h0, h1 = np.array(dfilters('cd', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('cd', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = MakeONFilter('Coiflet', 1)
     waveletFilter = MirrorFilt(scalingFilter)
@@ -96,9 +91,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 6
-    h0, h1 = np.array(dfilters('cd', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('cd', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = MakeONFilter('Daubechies', 4)
     waveletFilter = MirrorFilt(scalingFilter)
@@ -108,9 +102,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 7
-    h0, h1 = np.array(dfilters('oqf_362', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('oqf_362', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = MakeONFilter('Daubechies', 4)
     waveletFilter = MirrorFilt(scalingFilter)
@@ -120,9 +113,8 @@ def SLcheckFilterSizes(rows,cols, shearLevels,directionalFilter,scalingFilter,
                         "waveletFilter": waveletFilter,
                         "scalingFilter2": scalingFilter2}
     # configuration 8
-    h0, h1 = np.array(dfilters('oqf_362', 'd'), dtype=object) / np.sqrt(2)
+    h0, _ = dfilters('oqf_362', 'd')
     h0 = h0 / np.sqrt(2)
-    h1 = h1 / np.sqrt(2)
     directionalFilter = modulate2(h0, 'c')
     scalingFilter = MakeONFilter('Haar')
     scalingFilter2 = scalingFilter
@@ -236,10 +228,12 @@ def SLdshear(inputArray, k, axis):
 
     if axis == 0:
         for col in range(cols):
-            shearedArray[:,col] = np.roll(inputArray[:,col], int(k * np.floor(cols/2-col)))
+            # shearedArray[:,col] = np.roll(inputArray[:,col], int(k * np.floor(cols/2-col)))
+            shearedArray = shearedArray.at[:,col].set(np.roll(inputArray[:,col], int(k * np.floor(cols/2-col))))
     else:
         for row in range(rows):
-            shearedArray[row,:] = np.roll(inputArray[row,:], int(k * np.floor(rows/2-row)))
+            # shearedArray[row,:] = np.roll(inputArray[row,:], int(k * np.floor(rows/2-row)))
+            shearedArray = shearedArray.at[row,:].set(np.roll(inputArray[row,:], int(k * np.floor(rows/2-row))))
     return shearedArray
 
 
@@ -436,7 +430,8 @@ def SLgetShearlets2D(preparedFilters, shearletIdxs=None):
         scale = shearletIdxs[j,1]
         shearing = shearletIdxs[j,2]
         if cone == 0:
-            shearlets[:,:,j] = preparedFilters["cone1"]["lowpass"]
+            # shearlets[:,:,j] = preparedFilters["cone1"]["lowpass"]
+            shearlets = shearlets.at[:,:,j].set(preparedFilters["cone1"]["lowpass"])
         elif cone == 1:
             #here, the fft of the digital shearlet filters described in
             #equation (23) on page 15 of "ShearLab 3D: Faithful Digital
@@ -446,9 +441,11 @@ def SLgetShearlets2D(preparedFilters, shearletIdxs=None):
             #print(preparedFilters["cone1"]["wedge"][preparedFilters["shearLevels"][scale-1]])
             #print(preparedFilters["shearLevels"][scale-1])
             # letztes index checken! ggf. +1?
-            shearlets[:,:,j] = preparedFilters["cone1"]["wedge"][preparedFilters["shearLevels"][scale-1]][:,:,-shearing+np.power(2,preparedFilters["shearLevels"][scale-1])]*np.conj(preparedFilters["cone1"]["bandpass"][:,:,scale-1])
+            # shearlets[:,:,j] = preparedFilters["cone1"]["wedge"][preparedFilters["shearLevels"][scale-1]][:,:,-shearing+np.power(2,preparedFilters["shearLevels"][scale-1])]*np.conj(preparedFilters["cone1"]["bandpass"][:,:,scale-1])
+            shearlets = shearlets.at[:,:,j].set(preparedFilters["cone1"]["wedge"][preparedFilters["shearLevels"][scale-1]][:,:,-shearing+np.power(2,preparedFilters["shearLevels"][scale-1])]*np.conj(preparedFilters["cone1"]["bandpass"][:,:,scale-1]))
         else:
-            shearlets[:,:,j] = np.transpose(preparedFilters["cone2"]["wedge"][preparedFilters["shearLevels"][scale-1]][:,:,shearing+np.power(2,preparedFilters["shearLevels"][scale-1])]*np.conj(preparedFilters["cone2"]["bandpass"][:,:,scale-1]))
+            # shearlets[:,:,j] = np.transpose(preparedFilters["cone2"]["wedge"][preparedFilters["shearLevels"][scale-1]][:,:,shearing+np.power(2,preparedFilters["shearLevels"][scale-1])]*np.conj(preparedFilters["cone2"]["bandpass"][:,:,scale-1]))
+            shearlets = shearlets.at[:,:,j].set(np.transpose(preparedFilters["cone2"]["wedge"][preparedFilters["shearLevels"][scale-1]][:,:,shearing+np.power(2,preparedFilters["shearLevels"][scale-1])]*np.conj(preparedFilters["cone2"]["bandpass"][:,:,scale-1])))
         # the matlab version only returns RMS and dualFrameWeights if the function
         # is called accordingly. we compute them always for the time being.
         RMS = np.linalg.norm(shearlets, axis=(0,1))/np.sqrt(rows*cols)
@@ -491,7 +488,7 @@ def SLgetWedgeBandpassAndLowpassFilters2D(rows,cols,shearLevels,directionalFilte
 
     # allocate bandpass and wedge filters
     bandpass = np.zeros((rows,cols, NScales), dtype=complex) #these filters partition the frequency plane into different scales
-    wedge = [None] * ( max(shearLevels) + 1 ) # these filters partition the frequenecy plane into different directions
+    wedge = [None] * int( max(shearLevels) + 1 ) # these filters partition the frequenecy plane into different directions
 
     #normalize filters
     directionalFilter = directionalFilter/sum(sum(np.absolute(directionalFilter)))
@@ -504,7 +501,7 @@ def SLgetWedgeBandpassAndLowpassFilters2D(rows,cols,shearLevels,directionalFilte
     filterLow = [None] * NScales
     #typically, we have filterLow2{max(shearLevels)+1} = filterLow{NScales},
     # i.e. filterLow2{NScales} = h_1 (compare page 11)
-    filterLow2 = [None] * (max(shearLevels) + 1)
+    filterLow2 = [None] * int(max(shearLevels) + 1)
 
     ## initialize wavelet highpass and lowpass filters:
     #
@@ -527,13 +524,17 @@ def SLgetWedgeBandpassAndLowpassFilters2D(rows,cols,shearLevels,directionalFilte
         filterLow2[j] = np.convolve(filterLow2[-1], SLupsample(filterLow2[j+1],2,1))
     # construct bandpass filters for scales 1 to nScales
     for j in range(len(filterHigh)):
-        bandpass[:,:,j] = fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(SLpadArray(filterHigh[j], np.array([rows, cols])))))
+        # bandpass[:,:,j] = fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(SLpadArray(filterHigh[j], np.array([rows, cols])))))
+        bandpass = bandpass.at[:,:,j].set(fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(SLpadArray(filterHigh[j], np.array([rows, cols]))))))
 
     ## construct wedge filters for achieving directional selectivity.
     # as the entries in the shearLevels array describe the number of differently
     # sheared atoms on a certain scale, a different set of wedge
     # filters has to be constructed for each value in shearLevels.
-    filterLow2[-1].shape = (1, len(filterLow2[-1]))
+
+    # filterLow2[-1].shape = (1, len(filterLow2[-1]))
+    filterLow2[-1] = np.reshape(filterLow2[-1], (1, len(filterLow2[-1])))
+
     for shearLevel in np.unique(shearLevels):
             # preallocate a total of floor(2^(shearLevel+1)+1) wedge filters, where
             # floor(2^(shearLevel+1)+1) is the number of different directions of
@@ -556,7 +557,9 @@ def SLgetWedgeBandpassAndLowpassFilters2D(rows,cols,shearLevels,directionalFilte
             #
             # convert filterLow2 into a pseudo 2D array of size (len, 1) to use
             # the scipy.signal.convolve2d accordingly.
-            filterLow2[-1-shearLevel].shape = (1, len(filterLow2[-1-shearLevel]))
+
+            # filterLow2[-1-shearLevel].shape = (1, len(filterLow2[-1-shearLevel]))
+            filterLow2[-1-shearLevel] = np.reshape(filterLow2[-1-shearLevel], (1, len(filterLow2[-1-shearLevel])))
 
             wedgeHelp = scipy.signal.convolve2d(directionalFilterUpsampled,np.transpose(filterLow2[len(filterLow2)-shearLevel-1]));
             wedgeHelp = SLpadArray(wedgeHelp,np.array([rows,cols]));
@@ -592,7 +595,8 @@ def SLgetWedgeBandpassAndLowpassFilters2D(rows,cols,shearLevels,directionalFilte
                         wedgeUpsampledSheared = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(lowpassHelpFlip))) * fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(wedgeUpsampledSheared))))))
                 # obtain downsampled and renormalized and sheared wedge filter
                 # in the frequency domain, according to equation (22), page 15.
-                wedge[shearLevel][:,:,int(np.fix(np.power(2,shearLevel))-k)] = fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(np.power(2,shearLevel)*wedgeUpsampledSheared[:,0:np.power(2,shearLevel)*cols-1:np.power(2,shearLevel)])))
+                # wedge[shearLevel][:,:,int(np.fix(np.power(2,shearLevel))-k)] = fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(np.power(2,shearLevel)*wedgeUpsampledSheared[:,0:np.power(2,shearLevel)*cols-1:np.power(2,shearLevel)])))
+                wedge[shearLevel] = wedge[shearLevel].at[:,:,int(np.fix(np.power(2,shearLevel))-k)].set(fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(np.power(2,shearLevel)*wedgeUpsampledSheared[:,0:np.power(2,shearLevel)*cols-1:np.power(2,shearLevel)]))))
     # compute low pass filter of shearlet system
     lowpass = fftlib.fftshift(fftlib.fft2(fftlib.ifftshift(SLpadArray(np.outer(filterLow[0],filterLow[0]), np.array([rows, cols])))))
     return wedge, bandpass, lowpass
@@ -655,25 +659,28 @@ def SLpadArray(array, newSize):
             if sizeDiff == 0:
                 print("Warning: newSize is equal to padding size in dimension " + str(k) + ".")
             if sizeDiff % 2 == 0:
-                padSizes[k] = sizeDiff//2
+                padSizes = padSizes.at[k].set(sizeDiff//2)
             else:
-                padSizes[k] = np.ceil(sizeDiff/2)
+                padSizes = padSizes.at[k].set(np.ceil(sizeDiff/2))
                 if currSize[k] % 2 == 0:
                     # index 1...k+1
-                    idxModifier[k] = 1
+                    idxModifier = idxModifier.at[k].set(1)
                 else:
                     # index 0...k
-                    idxModifier[k] = 0
+                    idxModifier = idxModifier.at[k].set(0)
         padSizes = padSizes.astype(int)
 
         # if array is 1D but paddedArray is 2D we simply put the array (as a
         # row array in the middle of the new empty array). this seems to be
         # the behavior of the ShearLab routine from matlab.
         if array.ndim == 1:
-            paddedArray[padSizes[1], padSizes[0]:padSizes[0]+currSize[0]+idxModifier[0]] = array
+            # paddedArray[padSizes[1], padSizes[0]:padSizes[0]+currSize[0]+idxModifier[0]] = array
+            paddedArray = paddedArray.at[padSizes[1], padSizes[0]:padSizes[0]+currSize[0]+idxModifier[0]].set(array)
         else:
-            paddedArray[padSizes[0]-idxModifier[0]:padSizes[0]+currSize[0]-idxModifier[0],
-                    padSizes[1]:padSizes[1]+currSize[1]+idxModifier[1]] = array
+            # paddedArray[padSizes[0]-idxModifier[0]:padSizes[0]+currSize[0]-idxModifier[0],
+            #         padSizes[1]:padSizes[1]+currSize[1]+idxModifier[1]] = array
+            paddedArray = paddedArray.at[padSizes[0]-idxModifier[0]:padSizes[0]+currSize[0]-idxModifier[0],
+                    padSizes[1]:padSizes[1]+currSize[1]+idxModifier[1]].set(array)
     return paddedArray
 
 
@@ -807,7 +814,7 @@ def SLupsample(array, dims, nZeros):
     """
     if array.ndim == 1:
         sz = len(array)
-        idx = range(1,sz)
+        idx = np.asarray(range(1,sz))
         arrayUpsampled = np.insert(array, idx, 0)
     else:
         sz = np.asarray(array.shape)
@@ -817,11 +824,13 @@ def SLupsample(array, dims, nZeros):
         if dims == 1:
             arrayUpsampled = np.zeros(((sz[0]-1)*(nZeros+1)+1, sz[1]))
             for col in range(sz[0]):
-                arrayUpsampled[col*(nZeros)+col,:] = array[col,:]
+                # arrayUpsampled[col*(nZeros)+col,:] = array[col,:]
+                arrayUpsampled = arrayUpsampled.at[col*(nZeros)+col,:].set(array[col,:])
         if dims == 2:
             arrayUpsampled = np.zeros((sz[0], ((sz[1]-1)*(nZeros+1)+1)))
             for row in range(sz[1]):
-                arrayUpsampled[:,row*(nZeros)+row] = array[:,row]
+                # arrayUpsampled[:,row*(nZeros)+row] = array[:,row]
+                arrayUpsampled = arrayUpsampled.at[:,row*(nZeros)+row].set(array[:,row])
     return arrayUpsampled
 
 #

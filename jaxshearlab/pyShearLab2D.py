@@ -225,14 +225,16 @@ def SLsheardec2D(X, shearletSystem):
         # coeffs[:,:,j] = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j]))))
         coeffs = coeffs.at[..., j].set(fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift(Xfreq*np.conj(shearletSystem["shearlets"][:,:,j])))))
 
-    # probably due to rounding errors, the result may have imaginary parts with
-    # small magnitude. if they are small enough, we can ignore them. otherwise
-    # we report an error.
-    err_bound = np.finfo(X.dtype).resolution * 1e3
-    if np.max(np.abs(np.imag(coeffs))) > err_bound:
-        print("Warning: magnitude in imaginary part exceeded {}.".format(err_bound))
-        print("Data is probably not real-valued. Largest magnitude: " + str(np.max(np.abs(np.imag(coeffs)))))
-        print("Imaginary part neglected.")
+    # # probably due to rounding errors, the result may have imaginary parts with
+    # # small magnitude. if they are small enough, we can ignore them. otherwise
+    # # we report an error.
+    # err_bound = np.finfo(X.dtype).resolution * 1e3
+
+    # NOTE COMMENTED OUT TO AVOID TRACERBOOLCONVERSIONERROR
+    # # if np.max(np.abs(np.imag(coeffs))) > err_bound:
+    # #     print("Warning: magnitude in imaginary part exceeded {}.".format(err_bound))
+    # #     print("Data is probably not real-valued. Largest magnitude: " + str(np.max(np.abs(np.imag(coeffs)))))
+    # #     print("Imaginary part neglected.")
 
     return np.real(coeffs).astype(X.dtype)
 
@@ -274,14 +276,15 @@ def SLshearrec2D(coeffs, shearletSystem):
 
     X = fftlib.fftshift(fftlib.ifft2(fftlib.ifftshift((np.divide(X,shearletSystem["dualFrameWeights"])))))
 
-    # probably due to rounding errors, the result may have imaginary parts with
-    # small magnitude. if they are small enough, we can ignore them. otherwise
-    # we report an error.
-    err_bound = np.finfo(X.dtype).resolution * 1e3
-    if np.max(np.abs(np.imag(X))) > err_bound:
-        print("Warning: magnitude in imaginary part exceeded {}.".format(err_bound))
-        print("Data is probably not real-valued. Largest magnitude: " + str(np.max(np.abs(np.imag(X)))))
-        print("Imaginary part neglected.")
+    # NOTE COMMENTED OUT TO AVOID TRACERBOOLCONVERSIONERROR
+    # # probably due to rounding errors, the result may have imaginary parts with
+    # # small magnitude. if they are small enough, we can ignore them. otherwise
+    # # we report an error.
+    # err_bound = np.finfo(X.dtype).resolution * 1e3
+    # if np.max(np.abs(np.imag(X))) > err_bound:
+    #     print("Warning: magnitude in imaginary part exceeded {}.".format(err_bound))
+    #     print("Data is probably not real-valued. Largest magnitude: " + str(np.max(np.abs(np.imag(X)))))
+    #     print("Imaginary part neglected.")
 
     return np.real(X).astype(coeffs.dtype)
 

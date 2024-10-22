@@ -1,3 +1,5 @@
+This is a fork of pyShearLab which is being ported to Jax.
+
 # pyShearLab
 pyShearLab is a Python toolbox which is based on [ShearLab3D](http://www3.math.tu-berlin.de/numerik/www.shearlab.org/software) written by [Rafael Reisenhofer](http://www.math.uni-bremen.de/~reisenho/) and has been ported to Python by Stefan Loock.
 
